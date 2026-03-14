@@ -1,0 +1,66 @@
+---
+title: "RL workspace 2"
+format: html
+editor: visual
+---
+
+### Step 1: EDA
+
+```{r}
+#| include: false
+library(dplyr)
+library(RKaggle)
+
+Sys.setenv(KAGGLE_USERNAME = "Danielnazare")
+Sys.setenv(KAGGLE_KEY = "RL")
+
+df <- RKaggle::get_dataset("achintyatripathi/yahoo-finance-apple-inc-aapl")
+head(df)
+
+```
+
+```{r EDA}
+apple_df <- bind_rows(df)
+head(apple_df)
+
+na_counts_dplyr <- apple_df |>
+  summarise_all(~ sum(is.na(.)))
+
+#str(apple_df)
+```
+
+```{r price over time}
+library(ggplot2)
+
+ggplot(apple_df, aes(x = Date, y=Close)) +
+  labs(title = "Apple Closing Price Over Time", x = "Date", y = "Close Price")+
+  geom_line(color = "blue2")
+
+install.packages("quantmod")
+library(quantmod)
+getSymbols("AAPL", src = "yahoo")
+chartSeries(AAPL, type = "candlesticks")
+
+
+```
+
+```{r daily returns}
+apple_df$Return <- c(NA, diff(apple_df$Close) / head(apple_df$Close, -1))
+
+ggplot(apple_df, aes(x = Date, y = Return)) +
+  geom_line(color = "blue2") +
+  labs(title = "Apple Daily Returns Over Time", x = "Date", y = "Return") +
+  theme_minimal()
+
+```
+
+```{r trends}
+cor(apple_df$Close,apple_df$Volume)
+#Volume isn’t strongly predictive of price
+ggplot(apple_df, aes(x = Close, y = Volume)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Closing Price vs Volume",
+       x = "Closing Price", y = "Volume") +
+  theme_minimal()
+```
